@@ -2,35 +2,60 @@ pipeline {
     agent any
 
     stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/shakedd999/DevOps-challenge.git'
+            }
+        }
         stage('Build-Image') {
             steps {
-                bat 'docker build -t shakeddaniel/devops-challenge:%BUILD_NUMBER% .'
+                sh 'docker build -t shakeddaniel/devops-challenge:${BUILD_NUMBER} .'
             }
         }
+
         stage('Docker-login') {
             steps {
-                bat 'docker login -u shakeddaniel -p $DOCKER_PASSWORD'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                }
             }
         }
+
         stage('Push-Image') {
             steps {
-                bat 'docker push shakeddaniel/devops-challenge:%BUILD_NUMBER%'
+                sh 'docker push shakeddaniel/devops-challenge:${BUILD_NUMBER}'
             }
         }
-        stage('change-image-tag') {
+
+        stage('Change-image-tag') {
             steps {
-                powershell '''
-                    (Get-Content devops-challenge-chart/values.yaml) -replace 'tag: "1.0.0"', "tag: `"$env:BUILD_NUMBER`"" | Set-Content devops-challenge-chart/values.yaml
+                sh '''
+                    sed -i 's/tag: ".*"/tag: "'"${BUILD_NUMBER}"'"/' devops-challenge-chart/values.yaml
                 '''
             }
         }
+
         stage('commitchanges') {
             steps {
-                bat '''
-                    git add devops-challenge-chart/values.yaml
-                    git commit -m "Update image tag to $BUILD_NUMBER"
-                    git push
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-creds',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_TOKEN'
+                )]) {
+                    sh '''
+                        git config user.email "jenkins@example.com"
+                        git config user.name "jenkins"
+
+                        git add devops-challenge-chart/values.yaml
+                        git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
+
+                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/shakedd999/DevOps-challenge.git HEAD:main
+                    '''
+                }
             }
         }
     }
