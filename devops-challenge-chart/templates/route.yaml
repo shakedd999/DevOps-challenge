@@ -10,3 +10,4 @@ spec:
     targetPort: {{ .Values.service.port }}
   tls:
     termination: edge
+  path: /my-app
