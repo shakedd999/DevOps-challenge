@@ -2,18 +2,35 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone Repository') {
+        stage('Clone-Repository') {
             steps {
                 git branch: 'main', url: 'https://github.com/shakedd999/DevOps-challenge.git'
             }
         }
+
+        stage('SAST-Scan') {
+            steps {
+                sh '''
+                    semgrep scan --config auto --error --severity ERROR .
+                '''
+            }
+        }
+
         stage('Build-Image') {
             steps {
                 sh 'docker build -t shakeddaniel/devops-challenge:${BUILD_NUMBER} .'
             }
         }
 
-        stage('Docker-login') {
+        stage('Scan-Docker-Image') {
+            steps {
+                sh '''
+                    trivy image --exit-code 1 --severity CRITICAL shakeddaniel/devops-challenge:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('Docker-Login') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
@@ -31,7 +48,7 @@ pipeline {
             }
         }
 
-        stage('Change-image-tag') {
+        stage('Change-Image-Tag') {
             steps {
                 sh '''
                     sed -i 's/tag: ".*"/tag: "'"${BUILD_NUMBER}"'"/' devops-challenge-chart/values.yaml
@@ -39,7 +56,7 @@ pipeline {
             }
         }
 
-        stage('commitchanges') {
+        stage('Commit-Changes') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'github-creds',
