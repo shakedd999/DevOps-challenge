@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: devops-challenge-container
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: {{ .Values.containerPort }}
 
