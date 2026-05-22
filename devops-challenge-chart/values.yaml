@@ -1,7 +1,8 @@
 Name: devops-challenge-chart
 replicas: 1
 image:
-  repository: devops-challenge-image
+  repository: shakeddaniel
+  name: "devops-challenge"
   tag: "1.0.0"
 containerPort: 8080
 service:
