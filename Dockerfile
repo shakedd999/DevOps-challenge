@@ -1,5 +1,5 @@
 # Use the official Node.js image as the base
-FROM node:21-alpine
+FROM node:22-alpine
 
 # Create app user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
