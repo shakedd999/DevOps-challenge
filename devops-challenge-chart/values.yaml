@@ -3,7 +3,7 @@ replicas: 1
 image:
   repository: shakeddaniel
   name: "devops-challenge"
-  tag: "5"
+  tag: "6"
 containerPort: 8080
 service:
   port: 8080
