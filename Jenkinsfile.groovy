@@ -76,4 +76,10 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            sh 'docker rmi shakeddaniel/devops-challenge:${BUILD_NUMBER} || true'
+            cleanWs()
+        }
+    }
 }
